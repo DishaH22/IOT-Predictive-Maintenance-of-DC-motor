@@ -57,7 +57,21 @@ The system operates in **three main stages**:
 
 
 ---
+## Codes:
 
+---
 
+## 🚀 Future Improvements
+- Integrate machine learning algorithms for automatic fault prediction  
+- Expand monitoring to multiple motors simultaneously  
+- Add automated notifications/alerts for predictive maintenance  
+- Include advanced vibration analysis for more accurate fault diagnosis  
+
+---
+
+## 📚 References
+2. ISO 10816: Vibration Severity Chart for Industrial Machines  
+3. Blynk IoT Platform Documentation  
+4. TMP36, DHT22, MMA8451 Sensor Datasheets
 
 
