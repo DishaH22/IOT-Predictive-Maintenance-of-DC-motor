@@ -59,6 +59,155 @@ The system operates in **three main stages**:
 ---
 ## Codes:
 
+// ----------------------------------------------------
+// IoT Predictive Maintenance of DC Motor
+// Controller: LOLIN D1 Mini Pro (ESP8266)
+// Platform: Blynk IoT
+// ----------------------------------------------------
+
+// Blynk & ESP8266 Libraries
+#define BLYNK_PRINT Serial
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+#include <SimpleTimer.h>
+
+// Sensor Libraries
+#include <DHTesp.h>
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include "Adafruit_MMA8451.h"
+
+// Multiplexer Selection Lines
+#define MUX_A 13
+#define MUX_B 15
+
+// Analog Input
+#define ANALOG_INPUT A0
+
+// H-Bridge Pins
+const int FIN = D0;
+const int RIN = D5;
+
+// DHT Sensor
+DHTesp dht;
+
+// Accelerometer
+Adafruit_MMA8451 mma = Adafruit_MMA8451();
+
+// Blynk Credentials
+char auth[] = "YOUR_BLYNK_TOKEN";
+char ssid[] = "YOUR_WIFI";
+char pass[] = "YOUR_PASSWORD";
+
+SimpleTimer timer;
+
+// ----------------------------------------------------
+// Setup
+// ----------------------------------------------------
+void setup() {
+
+  Serial.begin(9600);
+
+  Blynk.begin(auth, ssid, pass);
+
+  // Initialize DHT22
+  dht.setup(12, DHTesp::DHT22);
+
+  pinMode(FIN, OUTPUT);
+  pinMode(RIN, OUTPUT);
+
+  pinMode(MUX_A, OUTPUT);
+  pinMode(MUX_B, OUTPUT);
+
+  Serial.println("Starting Predictive Maintenance System");
+
+  if (!mma.begin()) {
+    Serial.println("Accelerometer not detected!");
+    while (1);
+  }
+
+  Serial.println("MMA8451 detected");
+
+  mma.setRange(MMA8451_RANGE_2_G);
+
+  timer.setInterval(1000L, sendData);
+}
+
+// ----------------------------------------------------
+// Change MUX Channel
+// ----------------------------------------------------
+void changeMux(int a, int b) {
+  digitalWrite(MUX_A, a);
+  digitalWrite(MUX_B, b);
+}
+
+// ----------------------------------------------------
+// Send Sensor Data
+// ----------------------------------------------------
+void sendData() {
+
+  // Ambient Temperature
+  changeMux(LOW, LOW);
+
+  float analogTemp = analogRead(ANALOG_INPUT);
+  float voltage = analogTemp * 0.004;
+  float temp = (voltage * 100) - 49;
+
+  Serial.print("Ambient Temperature: ");
+  Serial.print(temp);
+  Serial.println(" °C");
+
+  Blynk.virtualWrite(V0, temp);
+
+  delay(1000);
+
+  // Motor Temperature
+  changeMux(LOW, HIGH);
+
+  float motorTemp = analogRead(ANALOG_INPUT);
+  float voltage2 = motorTemp * 0.004;
+  float tempMotor = (voltage2 * 100) - 49;
+
+  Serial.print("Motor Temperature: ");
+  Serial.print(tempMotor);
+  Serial.println(" °C");
+
+  Blynk.virtualWrite(V1, tempMotor);
+
+  // DHT Sensor
+  TempAndHumidity data = dht.getTempAndHumidity();
+
+  Serial.print("Humidity: ");
+  Serial.println(data.humidity);
+
+  Blynk.virtualWrite(V2, data.humidity);
+
+  // Accelerometer Data
+  sensors_event_t event;
+  mma.getEvent(&event);
+
+  Serial.print("Acceleration X: ");
+  Serial.println(event.acceleration.x);
+
+  Serial.print("Acceleration Y: ");
+  Serial.println(event.acceleration.y);
+
+  Serial.print("Acceleration Z: ");
+  Serial.println(event.acceleration.z);
+
+  Blynk.virtualWrite(V3, event.acceleration.x);
+  Blynk.virtualWrite(V4, event.acceleration.y);
+  Blynk.virtualWrite(V5, event.acceleration.z);
+}
+
+// ----------------------------------------------------
+// Loop
+// ----------------------------------------------------
+void loop() {
+  Blynk.run();
+  timer.run();
+}
+
 ---
 
 ## 🚀 Future Improvements
